@@ -7,16 +7,15 @@ class TokenBucket(object):
     """
     Simple implementation of a synchronized Token Bucket.
     Created mainly for learning purposes.
-
-    Cython Version
     """
+    raise NotImplementedError("the Cython version is currently not implemented and optimized")
 
-    def __init__(self, size, refilltime, refillammount, verbose=False, value=None, lastupdate=None):
+    def __init__(self, size, refillrate, refillamount, verbose=False, value=None, lastupdate=None):
         # type: (int, float, int, bool, int, int) -> None
         """
         :param size: The size of the Token Bucket
-        :param refilltime: The time interval for refilling the Token Bucket
-        :param refillammount: The amount of tokens to refill per refill operation
+        :param refillrate: The time interval for refilling the Token Bucket
+        :param refillamount: The amount of tokens to refill per refill operation
         :param verbose: Verbosity switch, for debug purposes
         :param value: Initialize the Token Bucket with a given value
         :param lastupdate: Initialize the Token Bucket with a given time
@@ -24,8 +23,8 @@ class TokenBucket(object):
 
         self.max_amount = size
         self.value = size
-        self.refill_time = refilltime
-        self.refill_amount = refillammount
+        self.refill_rate = refillrate
+        self.refill_amount = refillamount
         self.mutex = threading.RLock()
         self.last_update = time.time()
         self.verbose = verbose
@@ -64,7 +63,7 @@ class TokenBucket(object):
         with self.mutex:
             if not now:
                 now = time.time()
-            return int(((now - self.last_update) / self.refill_time))
+            return int(((now - self.last_update) / self.refill_rate))
 
     def current_filllevel(self):
         # type: () -> int
@@ -99,7 +98,7 @@ class TokenBucket(object):
 
                 # amount of refill operations * refilltime -> last update
                 # this is a logical calculation, based that time.time() is accurate
-                self.last_update += refill_count * self.refill_time
+                self.last_update += refill_count * self.refill_rate
 
             if self.value > self.max_amount:
                 if self.verbose:
@@ -144,7 +143,7 @@ class TokenBucket(object):
                         time_to_wait = 0
 
                     # theoretical time to wait for additional tokens, substracted by timedelta
-                    time_to_wait = (additional_tokes * self.refill_time) - time_to_wait
+                    time_to_wait = (additional_tokes * self.refill_rate) - time_to_wait
 
                     if time_to_wait < 0:
                         time_to_wait = 0

@@ -1,17 +1,15 @@
 import threading
-
 import time
 
 from TokenBucket.TokenBucket import TokenBucket
 
 printlock = threading.Lock()
 
+
 def consumeToken(bucket, name, iterations):
     # type: (TokenBucket, str, int) -> None
-    for i in xrange(iterations):
-        # bucket.reduce(1)
+    for _ in xrange(iterations):
         bucket.consumeToken(1)
-        # bucket.consume(1)
         with printlock:
             print "reduced bucket from thread " + name
 
@@ -33,7 +31,7 @@ if __name__ == "__main__":
     print "init bucket with a refill amount of", bucket.refill_amount
 
     print "this test will consume a total amount of", (iterations * parallelthreads), "tokens"
-    print "this test should take at least", ((iterations * parallelthreads) / refillamount)*refillrate, "seconds"
+    print "this test should take at least", ((iterations * parallelthreads) / refillamount) * refillrate, "seconds"
 
     past = time.time()
 
@@ -52,4 +50,3 @@ if __name__ == "__main__":
         t.join()
 
     print "that took", (time.time() - past), 'seconds'
-

@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print "init bucket with a refill amount of", bucket.refill_amount
 
     print "this test will consume a total amount of", (iterations * parallelthreads), "tokens"
-    print "this test should take at least", ((iterations * parallelthreads) / refillamount) * refillrate, "seconds"
+    print "this test should take at least", (((iterations * parallelthreads) / refillamount) * refillrate) - refillrate, "seconds"
 
     past = time.time()
 

@@ -43,5 +43,5 @@ extensions = [makeExtension(name) for name in extNames]
 
 # finally, we can pass all this to distutils
 setup(
-  ext_modules=cythonize(extensions)
+  ext_modules=cythonize(extensions, build_dir="build")
 )

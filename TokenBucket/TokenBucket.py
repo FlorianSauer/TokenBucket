@@ -78,7 +78,7 @@ class TokenBucket(object):
             return self.value
 
     def refill(self, now=None):
-        # type: (int) -> None
+        # type: (float) -> None
         """
         Performs a refill operation on the Token Bucket.
         The refill operation will only succeed, if the last update is long enough ago.

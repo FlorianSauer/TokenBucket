@@ -1,4 +1,5 @@
 import platform
+import os
 
 try:
     from setuptools import setup
@@ -8,10 +9,7 @@ except ImportError:
     from distutils.extension import Extension
 from Cython.Build import cythonize
 
-import os
 
-# scan the given directory for extension files, converting
-# them to extension names in dotted notation
 def scandir(dir, files=[]):
     for file in os.listdir(dir):
         path = os.path.join(dir, file)
@@ -35,6 +33,7 @@ def makeExtension(extName):
         extra_link_args=[fopenmp],
         )
 
+
 # get the list of extensions
 extNames = scandir("TokenBucket")
 
@@ -43,5 +42,6 @@ extensions = [makeExtension(name) for name in extNames]
 
 # finally, we can pass all this to distutils
 setup(
-  ext_modules=cythonize(extensions, build_dir="build")
+  ext_modules=cythonize(extensions, build_dir="build"), install_requires=['Cython']
 )
+

@@ -1,7 +1,7 @@
 import time
 from threading import Lock, Thread
 
-from TokenBucket.TokenBucket import TokenBucket
+from TokenBucket.TokenBucket_py import TokenBucket
 
 
 class App(object):
@@ -58,7 +58,7 @@ class App(object):
         size = 3
         refilltime = 5
         refillamount = 3
-        bucket = TokenBucket(size, refilltime, refillamount, verbose=False)
+        bucket = TokenBucket(size, refilltime, refillamount)
         if refillamount > size:
             refillamount = size
         self.lockPrint("test parameters:")

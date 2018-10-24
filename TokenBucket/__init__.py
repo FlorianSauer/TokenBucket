@@ -1,8 +1,10 @@
-__all__ = ['TokenBucket']
-
-# we try to import the Cython Modules
 try:
-    # if cannot import Cython Modules, fall back to pure python
-    from .TokenBucket_Cython import TokenBucket
+    from TokenBucket_cy import TokenBucket
 except ImportError:
-    from .TokenBucket import TokenBucket
+    from TokenBucket_py import TokenBucket
+
+from TokenBucketDecorator import withTokenBucket
+from TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError, TokenBucketError
+
+
+__all__ = ['TokenBucket', 'withTokenBucket', 'TokenBucketError', 'BucketSizeError', 'TokenAmountError', 'TimeoutError']

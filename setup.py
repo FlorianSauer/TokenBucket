@@ -46,7 +46,7 @@ extensions = [makeExtension(name) for name in extNames]
 # finally, we can pass all this to distutils
 setup(
     ext_modules=cythonize(extensions, build_dir="build"),
-    install_requires=['Cython'],
+    install_requires=['Cython', 'wrapt'],
     name = "TokenBucket",
     version = "1.0.1",
     author = "Florian Sauer",

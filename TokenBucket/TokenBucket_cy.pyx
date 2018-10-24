@@ -1,7 +1,7 @@
-import sys
 import threading
 import time
 
+from TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError
 
 cdef class TokenBucket(object):
     """
@@ -17,16 +17,13 @@ cdef class TokenBucket(object):
     cdef public int refill_amount
     cdef public object mutex
     cdef public int last_update
-    cdef public bint verbose
 
-
-    def __init__(self, size, refillrate, refillamount, verbose=False, value=None, lastupdate=None):
-        # type: (int, float, int, bool, int, int) -> None
+    def __init__(self, size, refillrate, refillamount, value=None, lastupdate=None):
+        # type: (int, float, int, int, int) -> None
         """
         :param size: The size of the Token Bucket
         :param refillrate: The time interval for refilling the Token Bucket
         :param refillamount: The amount of tokens to refill per refill operation
-        :param verbose: Verbosity switch, for debug purposes
         :param value: Initialize the Token Bucket with a given value
         :param lastupdate: Initialize the Token Bucket with a given time
         """
@@ -37,14 +34,13 @@ cdef class TokenBucket(object):
         self.refill_amount = refillamount
         self.mutex = threading.RLock()
         self.last_update = time.time()
-        self.verbose = verbose
         if value:
             self.value = value
         if lastupdate:
             self.last_update = lastupdate
 
     cdef int _refill_count(self, now=None):
-        # type: (int) -> int
+        # type: (float) -> int
         """
         calculate the amount of refill operations that can be executed,
         within the time period | last update -> now |
@@ -64,8 +60,6 @@ cdef class TokenBucket(object):
         :return: The amount of refill operations
         """
 
-        if self.verbose:
-            print "called _refill_count"
         # lastupdate at second 7
         # now is second 15
         # refilltime is 10
@@ -97,8 +91,6 @@ cdef class TokenBucket(object):
         :param now: Specifies the current time to use
         """
 
-        if self.verbose:
-            print "called refill"
         with self.mutex:
             if not now:
                 now = time.time()
@@ -111,12 +103,10 @@ cdef class TokenBucket(object):
                 self.last_update += refill_count * self.refill_rate
 
             if self.value > self.size:
-                if self.verbose:
-                    print "resetting, because self.value", self.value, "> self.size", self.size
                 self.value = self.size
 
-    cpdef bint consumeToken(self, int token_amount, bint blocking=True, timeout=None):
-        # type: (int, bool, int) -> bool
+    cpdef bint consumeToken(self, int token_amount, bint blocking=True, timeout=None) except *:
+        # type: (int, bool, float) -> bool
         """
         Consumes x tokens from the Token Bucket.
         Per default this method waits and blocks until at least x tokens are available for consuming.
@@ -125,11 +115,16 @@ cdef class TokenBucket(object):
         :param blocking: specifies, if this method should block, until enough tokens are available
         :param timeout: specifies the maximum time to wait, if blocking is enabled
         :return: returns if token_amount tokens could be consumed or not
+        :raises BucketSizeError: a BucketSizeError is raised, if the given token_amount is bigger than the maximum
+        bucket size
+        :raises TokenAmountError: a TokenAmountError is raised, if the current amount of tokens in the Bucket is 
+        smaller than token_amount and blocking is set to False
+        :raises TimeoutError: a TimeoutError is raised, if the bucket has not enough tokens and the time to wait for a 
+        sufficient amount of tokens woould take longer than the given timeout
         """
 
         if token_amount > self.size:
-            print >> sys.stderr, "cannot consume more tokens than bucket size"
-            return False
+            raise BucketSizeError("cannot consume more tokens than the maximum amount of tokens in the bucket")
 
         with self.mutex:
             now = time.time()
@@ -142,9 +137,9 @@ cdef class TokenBucket(object):
             else:  # we want to consume more tokens, than there are tokens in the bucket, bad case
                 additional_tokes = token_amount - self.value  # the ammount of tokens we are short
                 if not blocking:
-                    if self.verbose:
-                        print "cannot reduce bucket by more tokens than there are tokens in bucket, try less tokens, current aviable tokens are", self.value
-                    return False
+                    raise TokenAmountError(
+                        "cannot reduce bucket by more tokens than there are tokens in bucket, try less tokens, current aviable tokens are " + str(
+                            self.value))
                 else:  # we enabled to wait for more tokens
                     time_to_wait = now - self.last_update
 
@@ -159,16 +154,16 @@ cdef class TokenBucket(object):
                         time_to_wait = 0
                     if timeout:
                         if time_to_wait > timeout:
-                            if self.verbose:
-                                print "not enough tokens aviable, waiting would be", time_to_wait, "seconds, but is longer than allowed timeout of", timeout, "seconds, returning"
-                            return False
+                            raise TimeoutError("not enough tokens aviable, waiting would be " + str(
+                                time_to_wait) + " seconds, but is longer than allowed timeout of " + str(
+                                timeout) + " seconds, returning")
 
         # due to using 'with mutex' we have to move the following block outside the else block
         # this is VERY ugly, exchange it with mutex.aquire()+mutex.release()
         # will change in the future, maybe
-        if self.verbose:
-            print "not enough tokens aviable, waiting", time_to_wait, "seconds, so the bucket refills until then"
         time.sleep(time_to_wait)
+        if timeout:
+            timeout = timeout - time_to_wait
         return self.consumeToken(token_amount, blocking=blocking,
                                  timeout=timeout)  # lets try again to consume some tokens
 

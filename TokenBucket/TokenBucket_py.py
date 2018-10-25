@@ -1,3 +1,4 @@
+import math
 import threading
 import time
 
@@ -74,13 +75,14 @@ class TokenBucket(object):
             self.refill()  # refilling inside mutex, because another thread could jump between refill() and return value
             return self.value
 
-    def refill(self, now=None):
-        # type: (float) -> None
+    def refill(self, now=None, force=False):
+        # type: (float, bool) -> None
         """
         Performs a refill operation on the Token Bucket.
         The refill operation will only succeed, if the last update is long enough ago.
 
         :param now: Specifies the current time to use
+        :param force: perform a refill operation, even if no refill operation can be done at the moment.
         """
 
         with self.mutex:
@@ -93,6 +95,9 @@ class TokenBucket(object):
                 # amount of refill operations * refilltime -> last update
                 # this is a logical calculation, based that time.time() is accurate
                 self.last_update += refill_count * self.refill_rate
+            elif force:
+                self.value += self.refill_amount
+                self.last_update += 1 * self.refill_rate
 
             if self.value > self.size:
                 self.value = self.size
@@ -108,11 +113,11 @@ class TokenBucket(object):
         :param timeout: specifies the maximum time to wait, if blocking is enabled
         :return: returns if token_amount tokens could be consumed or not
         :raises BucketSizeError: a BucketSizeError is raised, if the given token_amount is bigger than the maximum
-        bucket size
+                                 bucket size
         :raises TokenAmountError: a TokenAmountError is raised, if the current amount of tokens in the Bucket is
-        smaller than token_amount and blocking is set to False
+                                  smaller than token_amount and blocking is set to False
         :raises TimeoutError: a TimeoutError is raised, if the bucket has not enough tokens and the time to wait for a
-        sufficient amount of tokens woould take longer than the given timeout
+                              sufficient amount of tokens woould take longer than the given timeout
         """
 
         if token_amount > self.size:
@@ -140,8 +145,15 @@ class TokenBucket(object):
                         time_to_wait = 0
 
                     # theoretical time to wait for additional tokens, substracted by timedelta
-                    time_to_wait = (additional_tokes * self.refill_rate) - time_to_wait
-
+                    if additional_tokes > self.refill_amount:
+                        # we want more tokens than a refill operation could provide, we have to wait longer than
+                        # one refill operation.
+                        time_to_wait = (math.ceil(
+                            self.refill_amount / float(additional_tokes)) * self.refill_rate) - time_to_wait
+                    else:
+                        # we want less or equal tokens than a refill operation could provide, we only have to wait
+                        # for this refill operation to take place
+                        time_to_wait = self.refill_rate - time_to_wait
                     if time_to_wait < 0:
                         time_to_wait = 0
                     if timeout:

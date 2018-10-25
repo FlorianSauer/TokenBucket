@@ -54,7 +54,7 @@ setup(
     license = "GPL-3.0",
     # keywords = "example documentation tutorial",
     url = "https://github.com/FlorianSauer/TokenBucket",
-    packages=['TokenBucket',],
+    packages=['TokenBucket', ],
     long_description=read('README.md'),
     # classifiers=[
     #     "Development Status :: 3 - Alpha",

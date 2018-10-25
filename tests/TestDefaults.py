@@ -1,0 +1,3 @@
+DEFAULT_BUCKET_SIZE = 3  # tokens
+DEFAULT_REFILL_TIME = 5  # seconds
+DEFAULT_REFILL_AMOUNT = 3  # tokens

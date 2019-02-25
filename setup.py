@@ -1,5 +1,5 @@
-import platform
 import os
+import platform
 
 try:
     from setuptools import setup
@@ -25,13 +25,14 @@ def makeExtension(extName):
     fopenmp = '-fopenmp'
     if platform.system() == 'Windows':
         fopenmp = '/openmp'
-    extPath = extName.replace(".", os.path.sep)+".pyx"
+    extPath = extName.replace(".", os.path.sep) + ".pyx"
     return Extension(
         extName,
         [extPath],
         extra_compile_args=[fopenmp],
         extra_link_args=[fopenmp],
-        )
+    )
+
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
@@ -45,15 +46,15 @@ extensions = [makeExtension(name) for name in extNames]
 
 # finally, we can pass all this to distutils
 setup(
-    ext_modules=cythonize(extensions, build_dir="build"),
+    ext_modules=cythonize(extensions, build_dir="build", compiler_directives={'language_level': 3}),
     install_requires=['Cython', 'wrapt'],
-    name = "TokenBucket",
-    version = "1.0.1",
-    author = "Florian Sauer",
-    description = "Python implementation of a Token Bucket",
-    license = "GPL-3.0",
+    name="TokenBucket",
+    version="1.0.1",
+    author="Florian Sauer",
+    description="Python implementation of a Token Bucket",
+    license="GPL-3.0",
     # keywords = "example documentation tutorial",
-    url = "https://github.com/FlorianSauer/TokenBucket",
+    url="https://github.com/FlorianSauer/TokenBucket",
     packages=['TokenBucket', ],
     long_description=read('README.md'),
     # classifiers=[
@@ -62,5 +63,3 @@ setup(
     #     "License :: OSI Approved :: BSD License",
     # ],
 )
-
-

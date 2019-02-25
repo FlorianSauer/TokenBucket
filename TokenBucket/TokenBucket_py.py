@@ -2,7 +2,7 @@ import math
 import threading
 import time
 
-from TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError
+from .TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError
 
 
 class TokenBucket(object):
@@ -135,7 +135,8 @@ class TokenBucket(object):
                 additional_tokes = token_amount - self.value  # the ammount of tokens we are short
                 if not blocking:
                     raise TokenAmountError(
-                        "cannot reduce bucket by more tokens than there are tokens in bucket, try less tokens, current aviable tokens are " + str(
+                        "cannot reduce bucket by more tokens than there are tokens in bucket, try less tokens, "
+                        "current aviable tokens are " + str(
                             self.value))
                 else:  # we enabled to wait for more tokens
                     time_to_wait = now - self.last_update

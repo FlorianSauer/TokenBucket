@@ -1,8 +1,9 @@
 import threading
 import time
+
 from libc cimport math
 
-from TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError
+from .TokenBucketErrors import TimeoutError, TokenAmountError, BucketSizeError
 
 cdef class TokenBucket(object):
     """
@@ -160,7 +161,8 @@ cdef class TokenBucket(object):
                     if additional_tokes > self.refill_amount:
                         # we want more tokens than a refill operation could provide, we have to wait longer than
                         # one refill operation.
-                        time_to_wait = (math.ceil(<double> self.refill_amount/<double> additional_tokes) * self.refill_rate) - time_to_wait
+                        time_to_wait = (math.ceil(
+                            <double> self.refill_amount / <double> additional_tokes) * self.refill_rate) - time_to_wait
                     else:
                         # we want less or equal tokens than a refill operation could provide, we only have to wait
                         # for this refill operation to take place

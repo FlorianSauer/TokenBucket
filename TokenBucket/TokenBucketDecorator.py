@@ -1,5 +1,6 @@
-import wrapt
 from typing import Callable
+
+import wrapt
 
 from . import TokenBucket
 # noinspection PyUnresolvedReferences
